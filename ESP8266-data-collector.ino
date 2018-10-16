@@ -1,11 +1,10 @@
 
 /*
  * ESP8266 HTTPCLient Code V1.0 TESTED
- * Copyright (C) 2018 Samsoedien - http://
+ * Copyright (C) 2018 Samsoedien - https://github.com/samsoedien/ESP8266-data-collector
  *
  * Description: 
- * A
- * 
+ * A simple program to perform GET and POST HTTP request without authentication to a REST API created in express/Nodejs.
  * 
  * How to use:
  * STEP 1: Install the libraries from the github or arduino library manager.
@@ -26,17 +25,17 @@
  * Date Modified: 17 Oct 2018
  */
 
-#include "ESP8266WiFi.h"       // Library to connect ESP8266 to WiFi network.
-#include "ESP8266HTTPClient.h" // Library to perform HTTP Requests.
-#include "ArduinoJson.h"       // Library to parse sensordata in JSON notation.
+#include "ESP8266WiFi.h"                  // Library to connect ESP8266 to WiFi network.
+#include "ESP8266HTTPClient.h"            // Library to perform HTTP Requests.
+#include "ArduinoJson.h"                  // Library to parse sensordata in JSON notation.
 
-#define ANALOG_PIN A0 // Defined pin for the analog reading.
+#define ANALOG_PIN A0                     // Defined pin for the analog reading.
 //#define ANALOG_PIN1 A1                  // Defined pin for the analog reading.
 //#define ANALOG_PIN2 A2                  // Defined pin for the analog reading.
 
 // WiFi parameters to be configured
-const char *ssid = "Samsoedien iPhone"; // The SSID of the connected network.
-const char *password = "xagven4jwcdxx"; // The password of the connected network.
+const char *ssid = "Samsoedien iPhone";   // The SSID of the connected network.
+const char *password = "xagven4jwcdxx";   // The password of the connected network.
 
 const char *httpEndpoint = "http://beautiful-data.herokuapp.com/api/heartdata";
 
@@ -146,4 +145,21 @@ void HTTPPostRequest(int analogVal)
   {
     Serial.println("Error in WiFi connection");
   }
+}
+
+char HTTPGetRequest() {
+  HTTPClient http; //Declare object of class HTTPClient
+
+  //httpEndpoint = httpEndpoint.concat(route);
+
+  http.begin(httpEndpoint);                           //Specify request destination
+  http.addHeader("Content-Type", "application/json"); //Specify content-type header
+
+  int httpCode = http.GET(); //Send the request
+  String payload = http.getString();           //Get the response payload
+
+  Serial.println(httpCode); //Print HTTP return code
+  Serial.println(payload);  //Print request response payload
+
+  http.end(); //Close connection
 }
