@@ -1,6 +1,6 @@
 # ESP8266-data-collector
 
-ESP8266 HTTPCLient Code V1.0 TESTED
+ESP8266 HTTPClient Data Collector Code V1.1 TESTED
 
 Copyright (C) 2018 Samsoedien
 
