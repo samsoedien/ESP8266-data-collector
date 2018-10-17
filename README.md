@@ -1,7 +1,6 @@
 # ESP8266-data-collector
 
 ESP8266 HTTPClient Data Collector Code V1.1 TESTED
-
 Copyright (C) 2018 Samsoedien
 
 ## Description:
@@ -10,7 +9,7 @@ A simple program to perform GET and POST HTTP request without authentication to 
 
 ## How to use:
 
-STEP 1: Install the libraries from the github or arduino library manager.
+STEP 1: Use ESP8266-data-collector.ino and install the libraries from the github or arduino library manager.
 
 **IMPORTANT:** Install Version 5 of ArduinoJSON library as newest version is still in beta mode and require different syntax.
 
