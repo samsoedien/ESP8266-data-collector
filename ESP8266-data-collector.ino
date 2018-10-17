@@ -15,23 +15,15 @@
  * STEP 5: Uncomment the route to perform your HTTP requests.
  * STEP 6: In the loop() choose a variable to send to http endpoint by putting it in the method: HTTPPostRequest(exampleVariable);
  * STEP 7: Upload the sketch to ESP8266.
- * 
- * Components for one module:
- * - ESP8266 NodeMCU V3.0
- * - Sensor(s) of choice.
- * 
- * Author: N Samsoedien
- * Date Created: 16 Oct 2018
- * Date Modified: 17 Oct 2018
  */
 
 #include "ESP8266WiFi.h"                  // Library to connect ESP8266 to WiFi network.
 #include "ESP8266HTTPClient.h"            // Library to perform HTTP Requests.
-#include "ArduinoJson.h"                  // Library to parse sensordata in JSON notation.
+#include "ArduinoJson.h"                  // Library to parse sensordata in JSON format.
 
-#define ANALOG_PIN A0                     // Defined pin for the analog reading.
-//#define ANALOG_PIN1 A1                  // Defined pin for the analog reading.
-//#define ANALOG_PIN2 A2                  // Defined pin for the analog reading.
+#define PULSE_PIN A0                     // Defined pin for the analog reading.
+
+int heartValue;
 
 // WiFi parameters to be configured
 const char *ssid = "Samsoedien iPhone";   // The SSID of the connected network.
@@ -87,18 +79,17 @@ void loop()
   if (currentMillis - previousMillis >= intervalTimer)
   {
     Serial.println("Posting Data..");
-    heartData();
-    Serial.println("heartValue");
-    HTTPPostRequest(110);
+    HTTPPostRequest(heartValue);
     previousMillis = currentMillis;
   }
+  heartValue = heartData();  
+  delay(20);
 }
 
 int heartData()
 {
-  //int heartValue = analogRead(ANALOG_PIN);
-  int heartValue = 80;
-  return heartValue;
+  int heartVal = analogRead(PULSE_PIN);
+  return heartVal;
 }
 
 void HTTPPostRequest(int analogVal)
