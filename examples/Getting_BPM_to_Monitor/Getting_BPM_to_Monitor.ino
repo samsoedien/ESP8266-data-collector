@@ -9,6 +9,8 @@
 4) Blinks LED on PIN 13 with user's Heartbeat.
 --------------------------------------------------------------------*/
 
+#define GROUP_1
+
 #define USE_ARDUINO_INTERRUPTS false    // Set-up low-level interrupts for most acurate BPM math.
 #include <PulseSensorPlayground.h>     // Includes the PulseSensorPlayground Library.   
 

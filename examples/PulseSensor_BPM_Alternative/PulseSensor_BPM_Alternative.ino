@@ -146,36 +146,11 @@ void loop() {
      sample (analog voltage) from the PulseSensor.
   */
   if (pulseSensor.sawNewSample()) {
-    /*
-       Every so often, send the latest Sample.
-       We don't print every sample, because our baud rate
-       won't support that much I/O.
-    */
-    if (--samplesUntilReport == (byte) 0) {
-      samplesUntilReport = SAMPLES_PER_SERIAL_SAMPLE;
-
-      pulseSensor.outputSample();
-
-      /*
-         At about the beginning of every heartbeat,
-         report the heart rate and inter-beat-interval.
-      */
-      if (pulseSensor.sawStartOfBeat()) {
-        pulseSensor.outputBeat();
-        if (pulseSensor.sawStartOfBeat()) { 
-          myBPM = pulseSensor.getBeatsPerMinute(); 
-          Serial.print("BPM: "); 
-          Serial.println(myBPM); 
-        }
-      }
-
-      
+    if (pulseSensor.sawStartOfBeat()) { 
+      myBPM = pulseSensor.getBeatsPerMinute(); 
+      Serial.print("BPM: "); 
+      Serial.println(myBPM); 
     }
-
-    /*******
-      Here is a good place to add code that could take up
-      to a millisecond or so to run.
-    *******/
   }
 
   /******

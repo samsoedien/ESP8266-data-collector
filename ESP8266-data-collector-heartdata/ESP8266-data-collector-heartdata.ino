@@ -10,45 +10,59 @@
  * STEP 1: Install the libraries from the github or arduino library manager.
  * IMPORTANT: Install Version 5 of ArduinoJSON library as newest version is still in beta mode and require different syntax.
  * STEP 2: Connect your desired sensor(s) to ESP8266 and define to what pin(s) it is connected.
- * STEP 3: Put your group number in GROUP_NUMBER (1 = Weather group, 2 = Drowsiness group, 3 = Stress group).
- * STEP 4: Fill in SSID and Password of WiFi network you want to use.
- * STEP 5: Set the interval timer to the desired rate of performing HTTP Request (minimum of 3000 is recommended).
- * STEP 6: In the readSensorData() method put your code. (NOTE: You don't need to touch the HTTPPostRequest method).
- * STEP 7: Make sure you map your sensordata to the array in HTTPPostRequest(sensordata[0], sensordata[1], sensordata[2], sensordata[3]) if you dont use all arrays just leave them empty.
+ * STEP 3: Fill in SSID and Password of WiFi network you want to use.
+ * STEP 4: Set the interval timer to the desired rate of performing HTTP Request (minimum of 3000 is recommended)
+ * STEP 5: Uncomment the route to perform your HTTP requests.
+ * STEP 6: In the loop() choose a variable to send to http endpoint by putting it in the method: HTTPPostRequest(exampleVariable);
+ * STEP 7: Use JSONencoder attributes: JSONencoder["attribute"] with corresponding values.
  * STEP 8: Upload the sketch to ESP8266.
  */
-
-#define GROUP_NUMBER 1                    // 1 = Weather group, 2 = Drowsiness group, 3 = Stress group
 
 #include "ESP8266WiFi.h"                  // Library to connect ESP8266 to WiFi network.
 #include "ESP8266HTTPClient.h"            // Library to perform HTTP Requests.
 #include "ArduinoJson.h"                  // Library to parse sensordata in JSON format.
 
-#define ANALOG_PIN0 A0                     // Defined pin for the analog reading.
-// define more pins if needed.
+#define USE_ARDUINO_INTERRUPTS false
+#include <PulseSensorPlayground.h>
 
+#define PULSE_PIN A0                     // Defined pin for the analog reading.
+
+int sensordata;
 
 // WiFi parameters to be configured
-const char *ssid = "xxxxxxxxxx";   // The SSID of the connected network.
-const char *password = "xxxxxxxxxx";   // The password of the connected network.
+const char *ssid = "Samsoedien iPhone";   // The SSID of the connected network.
+const char *password = "xagven4jwcdxx";   // The password of the connected network.
 
-const char *httpEndpoint1 = "http://beautiful-data.herokuapp.com/api/users/1/weatherdata";
-const char *httpEndpoint2 = "http://beautiful-data.herokuapp.com/api/users/1/drowsinessdata";
-const char *httpEndpoint3 = "http://beautiful-data.herokuapp.com/api/users/1/heartdata";
-const char *route;
+const char *httpEndpoint = "http://beautiful-data.herokuapp.com/api/users/1/heartdata";
+
+//const char* route = "/weatherdata";
+//const char* route = "/drowsydata";
+const char *route = "/heartdata";
 
 // Timer variables
 unsigned long previousMillis = 0;
 int intervalTimer = 10000;
 
-int sensorData[4];
+const int OUTPUT_TYPE = SERIAL_PLOTTER;
+
+const int PULSE_INPUT = A0;
+const int PULSE_BLINK = LED_BUILTIN;    // Pin 13 is the on-board LED
+const int PULSE_FADE = 5;
+const int THRESHOLD = 550;   // Adjust this number to avoid noise when idle
+
+byte samplesUntilReport;
+const byte SAMPLES_PER_SERIAL_SAMPLE = 10;
+
+int myBPM = 0;
+
+PulseSensorPlayground pulseSensor;
 
 void setup(void)
 {
   Serial.begin(115200);
-  Serial.println();                       //Clear some garbage that may be printed to the serial console
+  Serial.println(); //Clear some garbage that may be printed to the serial console
   Serial.print("Connecting..");
-  WiFi.begin(ssid, password);             // Connect to WiFi
+  WiFi.begin(ssid, password); // Connect to WiFi
 
   // while wifi not connected yet, print '.'
   // then after it connected, get out of the loop
@@ -75,30 +89,44 @@ void setup(void)
   Serial.print(rssi);
   Serial.println(" dBm");
   Serial.println("");
+
+  pulseSensor.analogInput(PULSE_INPUT);
+  pulseSensor.blinkOnPulse(PULSE_BLINK);
+  pulseSensor.fadeOnPulse(PULSE_FADE);
+
+  pulseSensor.setSerial(Serial);
+  pulseSensor.setOutputType(OUTPUT_TYPE);
+  pulseSensor.setThreshold(THRESHOLD);
+
+  // Skip the first SAMPLES_PER_SERIAL_SAMPLE in the loop().
+  samplesUntilReport = SAMPLES_PER_SERIAL_SAMPLE;
 }
 
 void loop()
 {
   unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= intervalTimer) {
-    HTTPPostRequest(sensorData[0], sensorData[1], sensorData[2], sensorData[3]);
+  if (currentMillis - previousMillis >= intervalTimer && sensordata != 0)
+  {
+    HTTPPostRequest(sensordata);
     previousMillis = currentMillis;
   }
-  sensorData[0] = readSensorData();
+  sensordata = heartData();  
   delay(20);
 }
 
-int readSensorData()
+int heartData()
 {
-  
-  // RUN YOUR CODE HERE AND RETURN IT TO MOVE IT OUT OF THE LOCAL SCOPE...
-  // In case of measuring more sensordata use multiple functions or put all sensordata in array and parse in loop().
-  
-  int val = analogRead(ANALOG_PIN0);
-  return val;
+  if (pulseSensor.sawNewSample()) {
+    if (pulseSensor.sawStartOfBeat()) { 
+      myBPM = pulseSensor.getBeatsPerMinute(); 
+      Serial.print("BPM: "); 
+      Serial.println(myBPM); 
+    }
+  }
+  return myBPM;
 }
 
-void HTTPPostRequest(int val1, int val2, int val3, int val4)
+void HTTPPostRequest(int analogVal)
 {
   if (WiFi.status() == WL_CONNECTED)
   { //Check WiFi connection status
@@ -106,26 +134,7 @@ void HTTPPostRequest(int val1, int val2, int val3, int val4)
     StaticJsonBuffer<300> JSONbuffer; //Declaring static JSON buffer
     JsonObject &JSONencoder = JSONbuffer.createObject();
 
-     switch(GROUP_NUMBER) {
-      case 1: 
-        JSONencoder["temperature"] = val1; 
-        JSONencoder["humidity"] = val2;
-        JSONencoder["lightDensity"] = val3;
-        JSONencoder["sound"] = val4;
-        route = httpEndpoint1;
-        break;
-      case 2:
-        JSONencoder["correctAnswers"] = val1;
-        JSONencoder["wrongAnswers"] = val2;
-        JSONencoder["totalTime"] = val3;        
-        route = httpEndpoint2;
-        break;
-      case 3:
-        JSONencoder["bpm"] = val1;
-        JSONencoder["ibi"] = val2;
-        route = httpEndpoint3;
-        break;
-     }
+    JSONencoder["bpm"] = analogVal; // specify your attribute name and the sensordata it needs to send.
 
     char JSONmessageBuffer[300];
     JSONencoder.prettyPrintTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
@@ -133,7 +142,7 @@ void HTTPPostRequest(int val1, int val2, int val3, int val4)
 
     HTTPClient http; //Declare object of class HTTPClient
 
-    http.begin(route);                           //Specify request destination
+    http.begin(httpEndpoint);                           //Specify request destination
     http.addHeader("Content-Type", "application/json"); //Specify content-type header
 
     int httpCode = http.POST(JSONmessageBuffer); //Send the request
