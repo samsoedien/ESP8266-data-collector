@@ -118,7 +118,7 @@ void HTTPPostRequest(int val1, int val2, int val3, int val4)
     case 2:
       JSONencoder["correctAnswers"] = val1;
       JSONencoder["wrongAnswers"] = val2;
-      JSONencoder["totalTime"] = val3;
+      JSONencoder["reactionTime"] = val3;
       route = httpEndpoint2;
       break;
     case 3:

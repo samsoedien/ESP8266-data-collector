@@ -8,7 +8,7 @@ Copyright (C) 2018 Samsoedien
 
 A simple arduino program to perform GET and POST HTTP request without authentication to a self deployed REST API and database.
 
-Use https://beautiful-data.herokuapp.com/api/users/ to acces to all data
+Use https://beautiful-data.herokuapp.com/api/users/ to acces all data.
 
 ## How to use:
 
